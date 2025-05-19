@@ -31,6 +31,15 @@
       --chart-border: #e5e7eb;
       --debug-bg: #f3f4f6;
       --shadow-color: rgba(0, 0, 0, 0.1);
+      --achievement-locked-bg: #e5e7eb;
+      --achievement-locked-text: #9ca3af;
+      --achievement-unlocked-bg: #dbeafe;
+      --achievement-unlocked-border: #3b82f6;
+      --xp-bar-bg: #e5e7eb;
+      --xp-bar-fill: #3b82f6;
+      --notification-bg: #dbeafe;
+      --notification-border: #3b82f6;
+      --notification-text: #1e40af;
     }
 
     /* Dark theme */
@@ -58,6 +67,15 @@
       --chart-border: #4b5563;
       --debug-bg: #374151;
       --shadow-color: rgba(0, 0, 0, 0.3);
+      --achievement-locked-bg: #374151;
+      --achievement-locked-text: #6b7280;
+      --achievement-unlocked-bg: #1e3a8a;
+      --achievement-unlocked-border: #3b82f6;
+      --xp-bar-bg: #374151;
+      --xp-bar-fill: #3b82f6;
+      --notification-bg: #1e3a8a;
+      --notification-border: #3b82f6;
+      --notification-text: #dbeafe;
     }
 
     /* Reset and base styles */
@@ -94,6 +112,18 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
+    }
+
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .dark-mode-toggle {
@@ -162,7 +192,7 @@
 
     .tabs-list {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
@@ -283,6 +313,7 @@
       display: flex;
       justify-content: space-between;
       margin-top: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .mood-option {
@@ -290,6 +321,7 @@
       flex-direction: column;
       align-items: center;
       cursor: pointer;
+      margin: 0.25rem;
     }
 
     .mood-option input {
@@ -496,6 +528,133 @@
       transition: color 0.3s;
     }
 
+    /* XP and Level styles */
+    .xp-display {
+      display: flex;
+      align-items: center;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    .level-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--button-primary);
+      color: white;
+      border-radius: 9999px;
+      width: 2rem;
+      height: 2rem;
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .xp-bar-container {
+      flex: 1;
+      height: 0.5rem;
+      background-color: var(--xp-bar-bg);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 0 0.5rem;
+    }
+
+    .xp-bar {
+      height: 100%;
+      background-color: var(--xp-bar-fill);
+      border-radius: 9999px;
+      transition: width 0.3s ease-out;
+    }
+
+    .xp-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Achievement styles */
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .achievement {
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .achievement.locked {
+      background-color: var(--achievement-locked-bg);
+      color: var(--achievement-locked-text);
+    }
+
+    .achievement.unlocked {
+      background-color: var(--achievement-unlocked-bg);
+      border: 1px solid var(--achievement-unlocked-border);
+      color: var(--text);
+    }
+
+    .achievement-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .achievement-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .achievement-description {
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .achievement-xp {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--button-primary);
+    }
+
+    /* Notification styles */
+    .notification {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background-color: var(--notification-bg);
+      border: 1px solid var(--notification-border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 300px;
+      z-index: 1000;
+      transform: translateY(100%);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--notification-text);
+    }
+
+    .notification-message {
+      font-size: 0.875rem;
+      color: var(--notification-text);
+    }
+
     /* Utility classes */
     .flex {
       display: flex;
@@ -546,12 +705,23 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Habit Tracker</h1>
-      <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-        <svg class="icon" id="theme-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-      </button>
+      <div class="header-content">
+        <h1>Habit Tracker</h1>
+        <div id="xp-display" class="xp-display">
+          <div class="level-badge">1</div>
+          <div class="xp-bar-container">
+            <div class="xp-bar" style="width: 0%;"></div>
+          </div>
+          <div class="xp-text">0 XP</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+          <svg class="icon" id="theme-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="tabs">
@@ -573,6 +743,13 @@
             <path d="M8 17v-3"></path>
           </svg>
           Stats
+        </div>
+        <div class="tab-trigger" data-tab="achievements">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+          Achievements
         </div>
         <div class="tab-trigger" data-tab="save">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -635,6 +812,11 @@
                       <input type="radio" name="mood" id="mood-good" value="good">
                       <label for="mood-good" class="mood-emoji">🙂</label>
                       <span class="mood-label">Good</span>
+                    </div>
+                    <div class="mood-option">
+                      <input type="radio" name="mood" id="mood-calm" value="calm">
+                      <label for="mood-calm" class="mood-emoji">😌</label>
+                      <span class="mood-label">Calm</span>
                     </div>
                     <div class="mood-option">
                       <input type="radio" name="mood" id="mood-neutral" value="neutral" checked>
@@ -722,6 +904,21 @@
         </div>
       </div>
 
+      <div class="tab-content" id="achievements-tab">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Achievements</h2>
+            <p class="card-description">Unlock achievements and earn XP by tracking your habits</p>
+          </div>
+          <div class="card-content">
+            <div id="achievements-grid" class="achievements-grid">
+              <!-- Achievements will be inserted here -->
+              <div class="empty-state">Loading achievements...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="tab-content" id="save-tab">
         <div class="card">
           <div class="card-header">
@@ -750,6 +947,11 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div id="notification" class="notification">
+      <div class="notification-title">Achievement Unlocked!</div>
+      <div class="notification-message">You've unlocked a new achievement.</div>
     </div>
   </div>
 
@@ -790,6 +992,103 @@
     let habits = [];
     let lastSaved = new Date();
     let darkMode = false;
+    let xp = 0;
+    let level = 1;
+    let unlockedAchievements = [];
+
+    // Achievement definitions
+    const achievements = [
+      {
+        id: 'first_habit',
+        name: 'First Step',
+        description: 'Track your first habit',
+        icon: '🌱',
+        xpReward: 50,
+        checkUnlock: (habits) => habits.length >= 1
+      },
+      {
+        id: 'habit_streak',
+        name: 'Consistency is Key',
+        description: 'Track habits for 3 consecutive days',
+        icon: '🔥',
+        xpReward: 100,
+        checkUnlock: (habits) => {
+          const dates = new Set();
+          habits.forEach(habit => {
+            const date = new Date(habit.timestamp).toLocaleDateString();
+            dates.add(date);
+          });
+          
+          // Check if we have habits from at least 3 different days
+          return dates.size >= 3;
+        }
+      },
+      {
+        id: 'five_habits',
+        name: 'Habit Collector',
+        description: 'Track 5 different habits',
+        icon: '📚',
+        xpReward: 75,
+        checkUnlock: (habits) => {
+          const uniqueHabits = new Set(habits.map(h => h.name));
+          return uniqueHabits.size >= 5;
+        }
+      },
+      {
+        id: 'ten_habits',
+        name: 'Habit Master',
+        description: 'Track a total of 10 habits',
+        icon: '🏆',
+        xpReward: 100,
+        checkUnlock: (habits) => habits.length >= 10
+      },
+      {
+        id: 'great_mood',
+        name: 'Feeling Great',
+        description: 'Track 3 habits that made you feel great',
+        icon: '😁',
+        xpReward: 75,
+        checkUnlock: (habits) => habits.filter(h => h.mood === 'great').length >= 3
+      },
+      {
+        id: 'calm_mind',
+        name: 'Calm Mind',
+        description: 'Track 3 habits that made you feel calm',
+        icon: '😌',
+        xpReward: 75,
+        checkUnlock: (habits) => habits.filter(h => h.mood === 'calm').length >= 3
+      },
+      {
+        id: 'long_duration',
+        name: 'Dedication',
+        description: 'Track a habit that lasted at least 60 minutes',
+        icon: '⏱️',
+        xpReward: 50,
+        checkUnlock: (habits) => habits.some(h => h.duration >= 60)
+      },
+      {
+        id: 'morning_person',
+        name: 'Early Bird',
+        description: 'Track a habit before 9 AM',
+        icon: '🌅',
+        xpReward: 50,
+        checkUnlock: (habits) => habits.some(h => {
+          const habitTime = new Date(h.timestamp);
+          return habitTime.getHours() < 9;
+        })
+      },
+      {
+        id: 'night_owl',
+        name: 'Night Owl',
+        description: 'Track a habit after 10 PM',
+        icon: '🌙',
+        xpReward: 50,
+        checkUnlock: (habits) => habits.some(h => {
+          const habitTime = new Date(h.timestamp);
+          return habitTime.getHours() >= 22;
+        })
+      }
+    ];
 
     // DOM elements
     const habitFormContainer = document.getElementById('habit-form-container');
@@ -807,6 +1106,9 @@
     const debugInfo = document.getElementById('debug-info');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const themeIcon = document.getElementById('theme-icon');
+    const xpDisplay = document.getElementById('xp-display');
+    const achievementsGrid = document.getElementById('achievements-grid');
+    const notification = document.getElementById('notification');
 
     // Chart elements
     const activityChartEl = document.getElementById('activity-chart');
@@ -870,6 +1172,11 @@
         if (tabName === 'stats') {
           updateCharts();
         }
+        
+        // If switching to achievements tab, render achievements
+        if (tabName === 'achievements') {
+          renderAchievements();
+        }
       });
     });
 
@@ -901,7 +1208,15 @@
       };
       
       habits.unshift(newHabit); // Add to beginning of array
+      
+      // Award XP for adding a habit
+      addXP(10);
+      
+      // Check for achievements
+      checkAchievements();
+      
       saveHabits();
+      saveProgress();
       renderHabitList();
       updateCharts();
       
@@ -915,7 +1230,12 @@
     // Add sample data button
     addSampleDataBtn.addEventListener('click', () => {
       addSampleData();
+      
+      // Check for achievements after adding sample data
+      checkAchievements();
+      
       saveHabits();
+      saveProgress();
       renderHabitList();
       updateCharts();
       alert('Sample data added successfully! Check the Stats tab to see visualizations.');
@@ -924,6 +1244,7 @@
     // Manual save button
     manualSaveBtn.addEventListener('click', () => {
       saveHabits();
+      saveProgress();
       lastSavedText.textContent = `All your habit data is saved locally in your browser. Last saved: ${new Date().toLocaleString()}`;
     });
 
@@ -996,6 +1317,7 @@
       switch (mood) {
         case 'great': return '😁';
         case 'good': return '🙂';
+        case 'calm': return '😌';
         case 'neutral': return '😐';
         case 'bad': return '🙁';
         case 'awful': return '😫';
@@ -1007,6 +1329,13 @@
     function saveHabits() {
       localStorage.setItem('habits', JSON.stringify(habits));
       lastSaved = new Date();
+    }
+
+    // Save progress (XP, level, achievements) to localStorage
+    function saveProgress() {
+      localStorage.setItem('xp', xp.toString());
+      localStorage.setItem('level', level.toString());
+      localStorage.setItem('unlockedAchievements', JSON.stringify(unlockedAchievements));
     }
 
     // Load habits from localStorage
@@ -1025,6 +1354,32 @@
       lastSavedText.textContent = `All your habit data is saved locally in your browser. Last saved: ${lastSaved.toLocaleString()}`;
     }
 
+    // Load progress from localStorage
+    function loadProgress() {
+      const savedXP = localStorage.getItem('xp');
+      const savedLevel = localStorage.getItem('level');
+      const savedAchievements = localStorage.getItem('unlockedAchievements');
+      
+      if (savedXP) {
+        xp = parseInt(savedXP);
+      }
+      
+      if (savedLevel) {
+        level = parseInt(savedLevel);
+      }
+      
+      if (savedAchievements) {
+        try {
+          unlockedAchievements = JSON.parse(savedAchievements);
+        } catch (e) {
+          console.error('Error loading achievements from localStorage:', e);
+          unlockedAchievements = [];
+        }
+      }
+      
+      updateXPDisplay();
+    }
+
     // Add sample data
     function addSampleData() {
       const now = new Date();
@@ -1034,7 +1389,7 @@
           name: 'Morning Meditation',
           timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString(),
           duration: 15,
-          mood: 'great'
+          mood: 'calm'
         },
         {
           id: 'sample2',
@@ -1053,7 +1408,7 @@
         {
           id: 'sample4',
           name: 'Morning Meditation',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4).toISOString(),
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4, 7, 30).toISOString(),
           duration: 10,
           mood: 'neutral'
         },
@@ -1066,10 +1421,10 @@
         },
         {
           id: 'sample6',
-          name: 'Exercise',
+          name: 'Yoga',
           timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3).toISOString(),
           duration: 60,
-          mood: 'great'
+          mood: 'calm'
         },
         {
           id: 'sample7',
@@ -1083,12 +1438,12 @@
           name: 'Morning Meditation',
           timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString(),
           duration: 15,
-          mood: 'great'
+          mood: 'calm'
         },
         {
           id: 'sample9',
           name: 'Journaling',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString(),
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 22, 30).toISOString(),
           duration: 15,
           mood: 'neutral'
         },
@@ -1102,11 +1457,21 @@
       ];
       
       habits = [...sampleHabits, ...habits];
+      
+      // Award XP for sample data
+      addXP(100);
     }
 
     // Export data
     function exportData() {
-      const dataStr = JSON.stringify(habits, null, 2);
+      const data = {
+        habits,
+        xp,
+        level,
+        unlockedAchievements
+      };
+      
+      const dataStr = JSON.stringify(data, null, 2);
       const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
       
       const exportFileDefaultName = 'habit-tracker-data.json';
@@ -1186,6 +1551,7 @@
       const moodColors = {
         great: '#10b981', // green
         good: '#60a5fa',  // blue
+        calm: '#8b5cf6',  // purple
         neutral: '#9ca3af', // gray
         bad: '#f97316',   // orange
         awful: '#ef4444'  // red
@@ -1194,6 +1560,7 @@
       const moodLabels = {
         great: 'Great 😁',
         good: 'Good 🙂',
+        calm: 'Calm 😌',
         neutral: 'Neutral 😐',
         bad: 'Bad 🙁',
         awful: 'Awful 😫'
@@ -1244,6 +1611,97 @@
       });
     }
 
+    // Render achievements
+    function renderAchievements() {
+      achievementsGrid.innerHTML = '';
+      
+      achievements.forEach(achievement => {
+        const isUnlocked = unlockedAchievements.includes(achievement.id);
+        
+        const achievementEl = document.createElement('div');
+        achievementEl.className = `achievement ${isUnlocked ? 'unlocked' : 'locked'}`;
+        
+        achievementEl.innerHTML = `
+          <div class="achievement-icon">${achievement.icon}</div>
+          <div class="achievement-name">${achievement.name}</div>
+          <div class="achievement-description">${achievement.description}</div>
+          <div class="achievement-xp">${isUnlocked ? 'Unlocked' : `+${achievement.xpReward} XP`}</div>
+        `;
+        
+        achievementsGrid.appendChild(achievementEl);
+      });
+    }
+
+    // Check for unlocked achievements
+    function checkAchievements() {
+      achievements.forEach(achievement => {
+        // Skip already unlocked achievements
+        if (unlockedAchievements.includes(achievement.id)) {
+          return;
+        }
+        
+        // Check if achievement should be unlocked
+        if (achievement.checkUnlock(habits)) {
+          // Unlock achievement
+          unlockedAchievements.push(achievement.id);
+          
+          // Award XP
+          addXP(achievement.xpReward);
+          
+          // Show notification
+          showNotification(`Achievement Unlocked: ${achievement.name}`, `+${achievement.xpReward} XP`);
+        }
+      });
+    }
+
+    // Add XP and update level
+    function addXP(amount) {
+      xp += amount;
+      
+      // Check for level up
+      const newLevel = Math.floor(xp / 100) + 1;
+      if (newLevel > level) {
+        const levelsGained = newLevel - level;
+        level = newLevel;
+        showNotification(`Level Up!`, `You've reached level ${level}`);
+      }
+      
+      updateXPDisplay();
+    }
+
+    // Update XP display
+    function updateXPDisplay() {
+      const levelBadge = xpDisplay.querySelector('.level-badge');
+      const xpBar = xpDisplay.querySelector('.xp-bar');
+      const xpText = xpDisplay.querySelector('.xp-text');
+      
+      levelBadge.textContent = level;
+      
+      // Calculate XP progress within current level
+      const xpForCurrentLevel = (level - 1) * 100;
+      const xpProgress = xp - xpForCurrentLevel;
+      const xpPercentage = Math.min(xpProgress, 100);
+      
+      xpBar.style.width = `${xpPercentage}%`;
+      xpText.textContent = `${xp} XP`;
+    }
+
+    // Show notification
+    function showNotification(title, message) {
+      const notificationTitle = notification.querySelector('.notification-title');
+      const notificationMessage = notification.querySelector('.notification-message');
+      
+      notificationTitle.textContent = title;
+      notificationMessage.textContent = message;
+      
+      notification.classList.add('show');
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
     function getLast7DaysData() {
       const data = [];
       const today = new Date();
@@ -1278,6 +1736,7 @@
       const moodCounts = {
         great: 0,
         good: 0,
+        calm: 0,
         neutral: 0,
         bad: 0,
         awful: 0
@@ -1312,6 +1771,9 @@
     function init() {
       loadThemePreference();
       loadHabits();
+      loadProgress();
+      renderAchievements();
+      checkAchievements(); // Check for achievements on load
     }
 
     // Start the app when DOM is fully loaded
