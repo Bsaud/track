@@ -40,6 +40,7 @@
       --notification-bg: #dbeafe;
       --notification-border: #3b82f6;
       --notification-text: #1e40af;
+      --streak-color: #f59e0b;
     }
 
     /* Dark theme */
@@ -76,6 +77,7 @@
       --notification-bg: #1e3a8a;
       --notification-border: #3b82f6;
       --notification-text: #dbeafe;
+      --streak-color: #f59e0b;
     }
 
     /* Reset and base styles */
@@ -383,6 +385,24 @@
       color: var(--text-muted);
       margin-top: 0.25rem;
       transition: color 0.3s;
+    }
+
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--streak-color);
+      color: white;
+      border-radius: 9999px;
+      padding: 0.125rem 0.375rem;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-left: 0.5rem;
+    }
+
+    .streak-badge svg {
+      width: 0.75rem;
+      height: 0.75rem;
+      margin-right: 0.25rem;
     }
 
     .empty-state {
@@ -988,8 +1008,36 @@
       return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
     }
 
+    // Format number with K suffix for thousands
+    function formatNumber(num) {
+      if (num < 1000) {
+        return num.toString();
+      } else if (num < 1000000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+      } else {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      }
+    }
+
+    // Check if two dates are the same day
+    function isSameDay(date1, date2) {
+      return (
+        date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate()
+      );
+    }
+
+    // Check if two dates are consecutive days
+    function isConsecutiveDay(date1, date2) {
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const diffMs = Math.abs(date1.getTime() - date2.getTime());
+      return diffMs <= oneDayMs && !isSameDay(date1, date2);
+    }
+
     // State management
     let habits = [];
+    let habitStreaks = {}; // Store streak data for each habit
     let lastSaved = new Date();
     let darkMode = false;
     let xp = 0;
@@ -1087,6 +1135,30 @@
           const habitTime = new Date(h.timestamp);
           return habitTime.getHours() >= 22;
         })
+      },
+      {
+        id: 'streak_3',
+        name: 'Streak Starter',
+        description: 'Maintain a 3-day streak for any habit',
+        icon: '🔥',
+        xpReward: 100,
+        checkUnlock: () => Object.values(habitStreaks).some(streak => streak >= 3)
+      },
+      {
+        id: 'streak_7',
+        name: 'Week Warrior',
+        description: 'Maintain a 7-day streak for any habit',
+        icon: '🔥🔥',
+        xpReward: 250,
+        checkUnlock: () => Object.values(habitStreaks).some(streak => streak >= 7)
+      },
+      {
+        id: 'streak_30',
+        name: 'Habit Master',
+        description: 'Maintain a 30-day streak for any habit',
+        icon: '🔥🔥🔥',
+        xpReward: 1000,
+        checkUnlock: () => Object.values(habitStreaks).some(streak => streak >= 30)
       }
     ];
 
@@ -1209,8 +1281,17 @@
       
       habits.unshift(newHabit); // Add to beginning of array
       
-      // Award XP for adding a habit
-      addXP(10);
+      // Update streak for this habit
+      updateHabitStreak(name);
+      
+      // Award XP for adding a habit (with streak bonus)
+      const streak = habitStreaks[name] || 0;
+      const streakBonus = calculateStreakBonus(streak);
+      addXP(10 + streakBonus);
+      
+      if (streakBonus > 0) {
+        showNotification(`Streak Bonus!`, `+${formatNumber(streakBonus)} XP for ${streak} day streak`);
+      }
       
       // Check for achievements
       checkAchievements();
@@ -1227,9 +1308,59 @@
       habitFormContainer.style.display = 'block';
     });
 
+    // Calculate streak bonus XP (exponential growth)
+    function calculateStreakBonus(streak) {
+      if (streak <= 1) return 0;
+      
+      // Exponential growth formula: base * growth^(streak-1)
+      // Base XP: 5, Growth factor: 1.5
+      return Math.floor(5 * Math.pow(1.5, streak - 1));
+    }
+
+    // Update streak for a habit
+    function updateHabitStreak(habitName) {
+      const today = new Date();
+      const habitsByName = habits.filter(h => h.name === habitName);
+      
+      if (habitsByName.length <= 1) {
+        // First time tracking this habit
+        habitStreaks[habitName] = 1;
+        return;
+      }
+      
+      // Find the most recent occurrence of this habit before today
+      const previousHabits = habitsByName.filter(h => {
+        const habitDate = new Date(h.timestamp);
+        return habitDate < today && !isSameDay(habitDate, today);
+      });
+      
+      if (previousHabits.length === 0) {
+        // No previous occurrences
+        habitStreaks[habitName] = 1;
+        return;
+      }
+      
+      // Sort by date (newest first)
+      previousHabits.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
+      const mostRecentDate = new Date(previousHabits[0].timestamp);
+      
+      // Check if the most recent occurrence was yesterday
+      if (isConsecutiveDay(today, mostRecentDate)) {
+        // Continue the streak
+        habitStreaks[habitName] = (habitStreaks[habitName] || 1) + 1;
+      } else {
+        // Streak broken
+        habitStreaks[habitName] = 1;
+      }
+    }
+
     // Add sample data button
     addSampleDataBtn.addEventListener('click', () => {
       addSampleData();
+      
+      // Update streaks for sample data
+      calculateAllStreaks();
       
       // Check for achievements after adding sample data
       checkAchievements();
@@ -1240,6 +1371,58 @@
       updateCharts();
       alert('Sample data added successfully! Check the Stats tab to see visualizations.');
     });
+
+    // Calculate streaks for all habits
+    function calculateAllStreaks() {
+      // Group habits by name
+      const habitsByName = {};
+      habits.forEach(habit => {
+        if (!habitsByName[habit.name]) {
+          habitsByName[habit.name] = [];
+        }
+        habitsByName[habit.name].push(habit);
+      });
+      
+      // Calculate streak for each habit
+      Object.keys(habitsByName).forEach(name => {
+        const habitEntries = habitsByName[name];
+        
+        // Sort by date (newest first)
+        habitEntries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        let currentStreak = 1;
+        let previousDate = new Date(habitEntries[0].timestamp);
+        
+        // Convert dates to day-only format for comparison
+        const dateToDay = date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const previousDay = dateToDay(previousDate);
+        
+        // Check for consecutive days
+        for (let i = 1; i < habitEntries.length; i++) {
+          const currentDate = new Date(habitEntries[i].timestamp);
+          const currentDay = dateToDay(currentDate);
+          
+          // Skip if same day as previous entry
+          if (currentDay.getTime() === previousDay.getTime()) {
+            continue;
+          }
+          
+          // Check if consecutive day
+          const dayDiff = (previousDay - currentDay) / (24 * 60 * 60 * 1000);
+          
+          if (dayDiff === 1) {
+            // Consecutive day
+            currentStreak++;
+            previousDate = currentDate;
+          } else {
+            // Streak broken
+            break;
+          }
+        }
+        
+        habitStreaks[name] = currentStreak;
+      });
+    }
 
     // Manual save button
     manualSaveBtn.addEventListener('click', () => {
@@ -1271,7 +1454,9 @@
       }
       
       habitList.innerHTML = '';
+      
       habits.forEach(habit => {
+        const streak = habitStreaks[habit.name] || 0;
         const habitElement = document.createElement('div');
         habitElement.className = 'habit-item';
         habitElement.innerHTML = `
@@ -1279,6 +1464,14 @@
             <div class="habit-header">
               <span class="habit-emoji">${getMoodEmoji(habit.mood)}</span>
               <span class="habit-name">${habit.name}</span>
+              ${streak > 1 ? `
+                <span class="streak-badge">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2l1.67 5.13h5.4l-4.37 3.18 1.67 5.13-4.37-3.18-4.37 3.18 1.67-5.13-4.37-3.18h5.4z"></path>
+                  </svg>
+                  ${streak}
+                </span>
+              ` : ''}
             </div>
             <div class="habit-meta">
               ${formatDistanceToNow(new Date(habit.timestamp))}
@@ -1303,6 +1496,10 @@
         button.addEventListener('click', () => {
           const id = button.getAttribute('data-id');
           habits = habits.filter(habit => habit.id !== id);
+          
+          // Recalculate streaks after deletion
+          calculateAllStreaks();
+          
           saveHabits();
           renderHabitList();
           updateCharts();
@@ -1328,6 +1525,7 @@
     // Save habits to localStorage
     function saveHabits() {
       localStorage.setItem('habits', JSON.stringify(habits));
+      localStorage.setItem('habitStreaks', JSON.stringify(habitStreaks));
       lastSaved = new Date();
     }
 
@@ -1341,6 +1539,8 @@
     // Load habits from localStorage
     function loadHabits() {
       const savedHabits = localStorage.getItem('habits');
+      const savedStreaks = localStorage.getItem('habitStreaks');
+      
       if (savedHabits) {
         try {
           habits = JSON.parse(savedHabits);
@@ -1350,6 +1550,16 @@
           habits = [];
         }
       }
+      
+      if (savedStreaks) {
+        try {
+          habitStreaks = JSON.parse(savedStreaks);
+        } catch (e) {
+          console.error('Error loading streaks from localStorage:', e);
+          habitStreaks = {};
+        }
+      }
+      
       renderHabitList();
       lastSavedText.textContent = `All your habit data is saved locally in your browser. Last saved: ${lastSaved.toLocaleString()}`;
     }
@@ -1384,75 +1594,81 @@
     function addSampleData() {
       const now = new Date();
       const sampleHabits = [
+        // Today
         {
           id: 'sample1',
           name: 'Morning Meditation',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString(),
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0).toISOString(),
           duration: 15,
           mood: 'calm'
         },
+        // Yesterday
         {
           id: 'sample2',
-          name: 'Reading',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 5).toISOString(),
-          duration: 30,
-          mood: 'good'
+          name: 'Morning Meditation',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 8, 15).toISOString(),
+          duration: 20,
+          mood: 'calm'
         },
+        // 2 days ago
         {
           id: 'sample3',
-          name: 'Exercise',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 5).toISOString(),
-          duration: 45,
-          mood: 'great'
-        },
-        {
-          id: 'sample4',
           name: 'Morning Meditation',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4, 7, 30).toISOString(),
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 7, 45).toISOString(),
           duration: 10,
           mood: 'neutral'
         },
+        // 3 days ago
         {
-          id: 'sample5',
-          name: 'Journaling',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3).toISOString(),
-          duration: 20,
+          id: 'sample4',
+          name: 'Morning Meditation',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 8, 30).toISOString(),
+          duration: 15,
           mood: 'good'
         },
+        // 4 days ago
+        {
+          id: 'sample5',
+          name: 'Morning Meditation',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4, 8, 0).toISOString(),
+          duration: 20,
+          mood: 'great'
+        },
+        // Other habits
         {
           id: 'sample6',
-          name: 'Yoga',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3).toISOString(),
-          duration: 60,
-          mood: 'calm'
-        },
-        {
-          id: 'sample7',
           name: 'Reading',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2).toISOString(),
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0).toISOString(),
           duration: 45,
           mood: 'good'
         },
         {
+          id: 'sample7',
+          name: 'Exercise',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 18, 0).toISOString(),
+          duration: 60,
+          mood: 'great'
+        },
+        {
           id: 'sample8',
-          name: 'Morning Meditation',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString(),
+          name: 'Journaling',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 21, 30).toISOString(),
           duration: 15,
           mood: 'calm'
         },
         {
           id: 'sample9',
-          name: 'Journaling',
-          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 22, 30).toISOString(),
-          duration: 15,
-          mood: 'neutral'
+          name: 'Yoga',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 7, 0).toISOString(),
+          duration: 30,
+          mood: 'good'
         },
         {
           id: 'sample10',
-          name: 'Exercise',
-          timestamp: new Date().toISOString(),
+          name: 'Reading',
+          timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4, 22, 15).toISOString(),
           duration: 30,
-          mood: 'good'
+          mood: 'calm'
         }
       ];
       
@@ -1468,7 +1684,8 @@
         habits,
         xp,
         level,
-        unlockedAchievements
+        unlockedAchievements,
+        habitStreaks
       };
       
       const dataStr = JSON.stringify(data, null, 2);
@@ -1683,7 +1900,7 @@
       const xpPercentage = Math.min(xpProgress, 100);
       
       xpBar.style.width = `${xpPercentage}%`;
-      xpText.textContent = `${xp} XP`;
+      xpText.textContent = `${formatNumber(xp)} XP`;
     }
 
     // Show notification
